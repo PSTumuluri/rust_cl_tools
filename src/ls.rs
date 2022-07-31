@@ -1,5 +1,4 @@
 use std::env;
-
 use std::error::Error;
 use std::fs::{self, DirEntry, ReadDir};
 
@@ -45,7 +44,7 @@ fn parse_config(args: &[String]) -> Result<Config, String> {
                 }
             }
         } else {
-
+            config.dir_path_vec.push(String::from(arg));
         }
     }
 
@@ -61,10 +60,21 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parse_config_no_options_set() {
-        let args = vec![String::from(".")];
+    fn parse_config_adds_directory_paths_and_sets_options() {
+        let args: Vec<String> = vec![String::from("ls"), String::from("."), 
+            String::from("-l"), String::from(".."), String::from("-a"), 
+            String::from("~")];
         let config = parse_config(&args).unwrap();
-        assert_eq!(config.long_list, false);
-        assert_eq!(config.list_all, false);
+
+        assert!(config.long_list);
+        assert!(config.list_all);
+
+        let dir_path_vec = config.dir_path_vec;
+        assert!(dir_path_vec.contains(&String::from(".")));
+        assert!(dir_path_vec.contains(&String::from("..")));
+        assert!(dir_path_vec.contains(&String::from("~")));
+        
+        assert!(!dir_path_vec.contains(&String::from("-l")));
+        assert!(!dir_path_vec.contains(&String::from("-a")));
     }
 }
