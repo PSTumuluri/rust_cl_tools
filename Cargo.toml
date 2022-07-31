@@ -1,5 +1,5 @@
 [package]
-name = "rust-cl-tools"
+name = "rust_cl_tools"
 version = "0.1.0"
 edition = "2021"
 
