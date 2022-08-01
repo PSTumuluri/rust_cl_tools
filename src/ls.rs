@@ -35,7 +35,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn parse_config(args: &[String]) -> Result<Config, String> {
+/// Scans command line arguments and returns a configuration option with the corresponding
+/// options set and paths added.
+/// Returns an error only if a specified option does not exist.
+fn parse_config(args: &[String]) -> Result<Config, &str> {
     let mut config = Config::from_default();
 
     for arg in &args[1..] {
@@ -46,7 +49,7 @@ fn parse_config(args: &[String]) -> Result<Config, String> {
                 match byte {
                     b'a'  => config.list_all = true,
                     b'l'  => config.long_list = true,
-                    other => return Err(String::from("Option not recognized.")),
+                    other => return Err("Option not recognized."),
                 }
             }
         } else {
@@ -61,6 +64,9 @@ fn parse_config(args: &[String]) -> Result<Config, String> {
     Ok(config)
 }
 
+/// Visits the specified path, printing its information if a file, or printing its 
+/// contents' information if a directory.
+/// Returns an error if the path does not correspond to an existing directory.
 fn process_dir_path(dir_path: &String, config: &Config) -> io::Result<()> {
     let dir_iter = fs::read_dir(dir_path)?;
     for entry in dir_iter {
@@ -72,9 +78,13 @@ fn process_dir_path(dir_path: &String, config: &Config) -> io::Result<()> {
 }
 
 /// Displays a directory entry according the configured settings.
+/// Panics when the OsString cannot be converted to a UTF-8 string because I don't know
+/// what else to do.
 fn process_entry(entry: &DirEntry, config: &Config) {
     let entry_string = entry.file_name().into_string().unwrap();
-    println!("{}", entry_string);
+    if config.list_all || (!config.list_all && entry_string.as_bytes()[0] != b'.') {
+        println!("{}", entry_string);
+    }
 }
 
 #[cfg(test)]
