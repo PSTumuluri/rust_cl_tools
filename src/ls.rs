@@ -1,5 +1,6 @@
 use std::env;
 use std::error::Error;
+use std::io;
 use std::fs::{self, DirEntry, ReadDir};
 
 /// Represents the configuration for this command.
@@ -25,6 +26,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let args: Vec<String> = env::args().collect();
     let config = parse_config(&args)?;
+    for dir_path in &config.dir_path_vec {
+        if let Err(_) = process_dir_path(dir_path, &config) {
+            println!("Directory not found: {}", dir_path);
+        }
+    }
 
     Ok(())
 }
@@ -48,11 +54,27 @@ fn parse_config(args: &[String]) -> Result<Config, String> {
         }
     }
 
+    if config.dir_path_vec.is_empty() {
+        config.dir_path_vec.push(String::from("."));
+    }
+
     Ok(config)
 }
 
-fn display_entry(entry: &DirEntry, config: &Config) {
-    println!("{}", entry.file_name().into_string().unwrap());
+fn process_dir_path(dir_path: &String, config: &Config) -> io::Result<()> {
+    let dir_iter = fs::read_dir(dir_path)?;
+    for entry in dir_iter {
+        let entry = entry?;
+        process_entry(&entry, config);
+    }
+
+    Ok(())
+}
+
+/// Displays a directory entry according the configured settings.
+fn process_entry(entry: &DirEntry, config: &Config) {
+    let entry_string = entry.file_name().into_string().unwrap();
+    println!("{}", entry_string);
 }
 
 #[cfg(test)]
