@@ -95,7 +95,7 @@ fn process_entry(path: &Path, config: &Config) {
     if config.long_list {
         print_long_list(path);
     }
-    println!("{}", file_name);
+    println!("{}", path.display());
 }
 
 fn print_long_list(path: &Path) {
@@ -116,11 +116,11 @@ mod tests {
         assert!(config.list_all);
 
         let path_vec = config.path_vec;
-        assert!(path_vec.contains(&String::from(".")));
-        assert!(path_vec.contains(&String::from("..")));
-        assert!(path_vec.contains(&String::from("~")));
+        assert!(path_vec.contains(&PathBuf::from(".")));
+        assert!(path_vec.contains(&PathBuf::from("..")));
+        assert!(path_vec.contains(&PathBuf::from("~")));
         
-        assert!(!path_vec.contains(&String::from("-l")));
-        assert!(!path_vec.contains(&String::from("-a")));
+        assert!(!path_vec.contains(&PathBuf::from("-l")));
+        assert!(!path_vec.contains(&PathBuf::from("-a")));
     }
 }
