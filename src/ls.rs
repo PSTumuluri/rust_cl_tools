@@ -1,7 +1,6 @@
 mod config;
 mod long_list_utils;
 
-use std::env;
 use std::error::Error;
 use std::io;
 use std::fs::{self, DirEntry, ReadDir};
@@ -10,9 +9,8 @@ use std::path::{Path, PathBuf};
 use crate::ls::config::Config;
 
 /// The ls command lists files in a directory.
-fn main() -> Result<(), Box<dyn Error>> {
+pub fn run(args: Vec<String>) -> Result<(), Box<dyn Error>> {
 
-    let args: Vec<String> = env::args().collect();
     let config = parse_config(&args)?;
     for path in &config.path_vec {
         if let Err(_) = process_path(path, &config) {
@@ -77,8 +75,9 @@ fn process_entry(path: &Path, config: &Config) {
     }
     if config.long_list {
         print_long_list(path);
+    } else {
+        println!("{}", file_name);
     }
-    println!("{}", file_name);
 }
 
 fn print_long_list(path: &Path) {
