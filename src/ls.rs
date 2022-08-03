@@ -1,26 +1,13 @@
+mod config;
+mod long_list_utils;
+
 use std::env;
 use std::error::Error;
 use std::io;
 use std::fs::{self, DirEntry, ReadDir};
 use std::path::{Path, PathBuf};
 
-/// Represents the configuration for this command.
-struct Config {
-    path_vec: Vec<PathBuf>,
-    long_list: bool,
-    list_all: bool,
-}
-
-impl Config {
-    /// Constructs a default config object where all options are off.
-    fn from_default() -> Config {
-        Config {
-            path_vec: vec![],
-            long_list: false,
-            list_all: false,
-        }
-    }
-}
+use crate::ls::config::Config;
 
 /// The ls command lists files in a directory.
 fn main() -> Result<(), Box<dyn Error>> {
@@ -39,27 +26,23 @@ fn main() -> Result<(), Box<dyn Error>> {
 /// Scans command line arguments and returns a configuration option with the corresponding
 /// options set and paths added.
 /// Returns an error only if a specified option does not exist.
-fn parse_config(args: &[String]) -> Result<Config, &str> {
+fn parse_config(args: &[String]) -> Result<Config, &'static str> {
     let mut config = Config::from_default();
 
     for arg in &args[1..] {
         let bytes = arg.as_bytes();
         // Options start with '-'. Anything else should be treated as a path name.
         if bytes[0] == b'-' {
-            for byte in &bytes[1..] {
-                match byte {
-                    b'a'  => config.list_all = true,
-                    b'l'  => config.long_list = true,
-                    other => return Err("Option not recognized."),
-                }
+            for &byte in &bytes[1..] {
+                config.set_option(byte)?;
             }
         } else {
-            config.path_vec.push(PathBuf::from(arg));
+            config.add_path(arg);
         }
     }
 
     if config.path_vec.is_empty() {
-        config.path_vec.push(PathBuf::from("."));
+        config.add_path(".");
     }
 
     Ok(config)
@@ -95,10 +78,11 @@ fn process_entry(path: &Path, config: &Config) {
     if config.long_list {
         print_long_list(path);
     }
-    println!("{}", path.display());
+    println!("{}", file_name);
 }
 
 fn print_long_list(path: &Path) {
+    println!("{}", long_list_utils::make_long_list_string(path));
 }
 
 #[cfg(test)]
