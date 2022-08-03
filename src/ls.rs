@@ -9,9 +9,9 @@ use std::path::{Path, PathBuf};
 use crate::ls::config::Config;
 
 /// The ls command lists files in a directory.
-pub fn run(args: Vec<String>) -> Result<(), Box<dyn Error>> {
+pub fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
 
-    let config = parse_config(&args)?;
+    let config = parse_config(args)?;
     for path in &config.path_vec {
         if let Err(_) = process_path(path, &config) {
                 println!("Directory not found: {}", path.display());
