@@ -3,7 +3,6 @@ mod long_list_utils;
 
 use std::error::Error;
 use std::io;
-use std::fs::{self, DirEntry, ReadDir};
 use std::path::{Path, PathBuf};
 
 use crate::ls::config::Config;
@@ -11,7 +10,7 @@ use crate::ls::config::Config;
 /// The ls command lists files in a directory.
 pub fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
 
-    let config = parse_config(args)?;
+    let config = parse_config(&args);
     for path in &config.path_vec {
         if let Err(_) = process_path(path, &config) {
                 println!("Directory not found: {}", path.display());
@@ -24,15 +23,16 @@ pub fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
 /// Scans command line arguments and returns a configuration option with the corresponding
 /// options set and paths added.
 /// Returns an error only if a specified option does not exist.
-fn parse_config(args: &[String]) -> Result<Config, &'static str> {
+fn parse_config(args: &[String]) -> Config {
     let mut config = Config::from_default();
 
     for arg in &args[1..] {
         let bytes = arg.as_bytes();
-        // Options start with '-'. Anything else should be treated as a path name.
-        if bytes[0] == b'-' {
+        // Options consist of a '-' followed by at least one character.
+        // Anything else should be treated as a path name.
+        if bytes.len() > 1 && bytes[0] == b'-' {
             for &byte in &bytes[1..] {
-                config.set_option(byte)?;
+                config.set_option(byte);
             }
         } else {
             config.add_path(arg);
@@ -43,7 +43,7 @@ fn parse_config(args: &[String]) -> Result<Config, &'static str> {
         config.add_path(".");
     }
 
-    Ok(config)
+    config
 }
 
 /// Visits the specified path, printing its information if a file, or printing its 
@@ -59,7 +59,7 @@ fn process_path(path: &Path, config: &Config) -> io::Result<()> {
             process_entry(&entry.path(), config);
         }
     } else {
-        println!("File type not supported for {}", path.display());
+        println!("Could not list file: '{}'", path.display());
     }
 
     Ok(())
@@ -93,9 +93,8 @@ mod tests {
         let args: Vec<String> = vec![String::from("ls"), String::from("."), 
             String::from("-l"), String::from(".."), String::from("-a"), 
             String::from("~")];
-        let config = parse_config(&args).unwrap();
+        let config = parse_config(&args);
 
-        assert!(config.long_list);
         assert!(config.list_all);
 
         let path_vec = config.path_vec;

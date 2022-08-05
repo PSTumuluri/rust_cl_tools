@@ -17,14 +17,11 @@ impl Config {
         }
     }
 
-    pub fn set_option(&mut self, byte: u8) -> Result<(), &'static str> {
+    pub fn set_option(&mut self, byte: u8) {
         match byte {
             b'a'  => self.list_all = true,
-            b'l'  => self.long_list = true,
-            other => return Err("Option not recognized."),
-        }
-
-        Ok(())
+            _ => println!("option not recognized"),
+        };
     }
 
     pub fn add_path(&mut self, path: &str) {
