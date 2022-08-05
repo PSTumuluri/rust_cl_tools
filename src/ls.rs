@@ -13,7 +13,7 @@ pub fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
     let config = parse_config(&args);
     for path in &config.path_vec {
         if let Err(_) = process_path(path, &config) {
-                println!("Directory not found: {}", path.display());
+                println!("Could not read directory: {}", path.display());
         }
     }
 
