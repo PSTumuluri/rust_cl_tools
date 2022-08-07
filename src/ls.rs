@@ -1,49 +1,76 @@
 mod config;
 mod long_list_utils;
+mod file;
 
 use std::error::Error;
 use std::io;
+use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 use crate::ls::config::Config;
+use crate::ls::file::{File, Directory, LsError};
 
 /// The ls command lists files in a directory.
 pub fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
 
-    let config = parse_config(&args);
-    for path in &config.path_vec {
+    let config = Config::parse_args(&args);
+
+    let mut error_vec: Vec<LsError> = vec![];
+    let mut file_vec: Vec<File> = vec![]; 
+    let mut dir_vec: Vec<Directory> = vec![];
+
+    for path_name in config.path_name_vec.iter() {
+        let path = Path::new(path_name);
+        if path.is_file() {
+            file_vec.push(File { 
+                file_str: path_name,
+            });
+        } else if path.is_dir() {
+            dir_vec.push(Directory {
+                dir_str: path_name,
+                file_name_vec: path.read_dir().unwrap()
+                    .map(|dir_entry| 
+                         dir_entry.unwrap().file_name().into_string().unwrap())
+                    .collect(),
+            });
+        } else {
+            error_vec.push(LsError {
+                error_str: format!("could not find file or directory: {}", path_name),
+            });
+        }
+       /*
         if let Err(_) = process_path(path, &config) {
                 println!("Could not read directory: {}", path.display());
         }
+        */
     }
+    print_errors(&error_vec, &config);
+    print_files(&file_vec, &config);
+    print_dirs(&dir_vec, &config);
+ 
 
     Ok(())
 }
 
-/// Scans command line arguments and returns a configuration option with the corresponding
-/// options set and paths added.
-/// Returns an error only if a specified option does not exist.
-fn parse_config(args: &[String]) -> Config {
-    let mut config = Config::from_default();
+fn print_errors(error_vec: &[LsError], config: &Config) {
+    for error in error_vec {
+        println!("{}", error.error_str);
+    }
+}
 
-    for arg in &args[1..] {
-        let bytes = arg.as_bytes();
-        // Options consist of a '-' followed by at least one character.
-        // Anything else should be treated as a path name.
-        if bytes.len() > 1 && bytes[0] == b'-' {
-            for &byte in &bytes[1..] {
-                config.set_option(byte);
-            }
-        } else {
-            config.add_path(arg);
+fn print_files(file_vec: &[File], config: &Config) {
+    for file in file_vec {
+        println!("{}", file.file_str);
+    }
+}
+
+fn print_dirs(dir_vec: &[Directory], config: &Config) {
+    for dir in dir_vec {
+        println!("{}:", dir.dir_str);
+        for file_name in dir.file_name_vec.iter() {
+            println!("{}", file_name);
         }
     }
-
-    if config.path_vec.is_empty() {
-        config.add_path(".");
-    }
-
-    config
 }
 
 /// Visits the specified path, printing its information if a file, or printing its 
@@ -93,16 +120,16 @@ mod tests {
         let args: Vec<String> = vec![String::from("ls"), String::from("."), 
             String::from("-l"), String::from(".."), String::from("-a"), 
             String::from("~")];
-        let config = parse_config(&args);
+        let config = Config::parse_args(&args);
 
         assert!(config.list_all);
 
-        let path_vec = config.path_vec;
-        assert!(path_vec.contains(&PathBuf::from(".")));
-        assert!(path_vec.contains(&PathBuf::from("..")));
-        assert!(path_vec.contains(&PathBuf::from("~")));
+        let path_name_vec = config.path_name_vec;
+        assert!(path_name_vec.contains(&"."));
+        assert!(path_name_vec.contains(&".."));
+        assert!(path_name_vec.contains(&"~"));
         
-        assert!(!path_vec.contains(&PathBuf::from("-l")));
-        assert!(!path_vec.contains(&PathBuf::from("-a")));
+        assert!(!path_name_vec.contains(&"-l"));
+        assert!(!path_name_vec.contains(&"-a"));
     }
 }
