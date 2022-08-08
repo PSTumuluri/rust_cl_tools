@@ -20,29 +20,23 @@ pub fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
     let mut dir_vec: Vec<Directory> = vec![];
 
     for path_name in config.path_name_vec.iter() {
-        let path = Path::new(path_name);
-        if path.is_file() {
+        if path_name.is_file() {
             file_vec.push(File { 
                 file_str: path_name,
             });
-        } else if path.is_dir() {
+        } else if path_name.is_dir() {
+            let dir_iter = path_name.read_dir().unwrap()
+                .map(|dir_entry| PathBuf::from(dir_entry.unwrap().file_name()));
             dir_vec.push(Directory {
                 dir_str: path_name,
-                file_name_vec: path.read_dir().unwrap()
-                    .map(|dir_entry| 
-                         dir_entry.unwrap().file_name().into_string().unwrap())
-                    .collect(),
+                file_name_vec: dir_iter.collect(),
             });
         } else {
             error_vec.push(LsError {
-                error_str: format!("could not find file or directory: {}", path_name),
+                error_str: String::from((
+                    format!("could not find file or directory: {}", path_name.display()))),
             });
         }
-       /*
-        if let Err(_) = process_path(path, &config) {
-                println!("Could not read directory: {}", path.display());
-        }
-        */
     }
     print_errors(&error_vec, &config);
     print_files(&file_vec, &config);
@@ -60,15 +54,15 @@ fn print_errors(error_vec: &[LsError], config: &Config) {
 
 fn print_files(file_vec: &[File], config: &Config) {
     for file in file_vec {
-        println!("{}", file.file_str);
+        println!("{}", file.file_str.display());
     }
 }
 
 fn print_dirs(dir_vec: &[Directory], config: &Config) {
     for dir in dir_vec {
-        println!("{}:", dir.dir_str);
+        println!("{}:", dir.dir_str.display());
         for file_name in dir.file_name_vec.iter() {
-            println!("{}", file_name);
+            println!("{}", file_name.display());
         }
     }
 }
