@@ -1,11 +1,11 @@
 use std::path::PathBuf;
 
-pub struct File<'a> {
-    pub file_str: &'a PathBuf,
+pub struct File {
+    pub file_str: PathBuf,
 }
 
-pub struct Directory<'a> {
-    pub dir_str: &'a PathBuf,
+pub struct Directory {
+    pub dir_str: PathBuf,
     pub file_name_vec: Vec<PathBuf>,
 }
 

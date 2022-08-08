@@ -1,10 +1,14 @@
 use std::path::PathBuf;
 
+use super::file::{File, Directory, LsError};
+
 /// Represents the configuration for this command.
 /// We can use string slices because the config lives and dies with the command line
 /// arguments in the main function.
 pub struct Config {
-    pub path_name_vec: Vec<PathBuf>,
+    pub file_vec: Vec<File>,
+    pub dir_vec: Vec<Directory>,
+    pub error_vec: Vec<LsError>,
     pub long_list: bool,
     pub list_all: bool,
 }
@@ -13,7 +17,9 @@ impl Config {
     /// Constructs a default config object where all options are off.
     fn default() -> Config {
         Config {
-            path_name_vec: vec![],
+            file_vec: vec![],
+            dir_vec: vec![],
+            error_vec: vec![],
             long_list: false,
             list_all: false,
         }
@@ -34,12 +40,13 @@ impl Config {
                     config.set_option(byte);
                 }
             } else {
-                config.add_path_name(PathBuf::from(arg));
+                config.collect_file(arg);
             }
         }
 
-        if config.path_name_vec.is_empty() {
-            config.add_path_name(PathBuf::from("."));
+        if config.file_vec.is_empty() && config.dir_vec.is_empty() && 
+            config.error_vec.is_empty() {
+            config.collect_file(".");
         }
 
         config
@@ -53,8 +60,46 @@ impl Config {
         };
     }
 
-    pub fn add_path_name(&mut self, path: PathBuf) {
-        self.path_name_vec.push(path);
+    fn collect_file(&mut self, path_name: &str) {
+        let path_name = PathBuf::from(path_name);
+        if path_name.is_file() {
+            self.file_vec.push(File { 
+                file_str: path_name,
+            });
+        } else if path_name.is_dir() {
+            let dir_iter = path_name.read_dir().unwrap()
+                .map(|dir_entry| PathBuf::from(dir_entry.unwrap().file_name()));
+            self.dir_vec.push(Directory {
+                dir_str: path_name,
+                file_name_vec: dir_iter.collect(),
+            });
+        } else {
+            self.error_vec.push(LsError {
+                error_str: 
+                    format!("could not find file or directory: {}", path_name.display()),
+            });
+        }
+    }
+
+    pub fn print_errors(&self) {
+        for error in self.error_vec.iter() {
+            println!("{}", error.error_str);
+        }
+    }
+
+    pub fn print_files(&self) {
+        for file in self.file_vec.iter() {
+            println!("{}", file.file_str.display());
+        }
+    }
+
+    pub fn print_dirs(&self) {
+        for dir in self.dir_vec.iter() {
+            println!("{}:", dir.dir_str.display());
+            for file_name in dir.file_name_vec.iter() {
+                println!("{}", file_name.display());
+            }
+        }
     }
 }
 

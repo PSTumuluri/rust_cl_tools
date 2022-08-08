@@ -15,56 +15,11 @@ pub fn run(args: &[String]) -> Result<(), Box<dyn Error>> {
 
     let config = Config::parse_args(&args);
 
-    let mut error_vec: Vec<LsError> = vec![];
-    let mut file_vec: Vec<File> = vec![]; 
-    let mut dir_vec: Vec<Directory> = vec![];
-
-    for path_name in config.path_name_vec.iter() {
-        if path_name.is_file() {
-            file_vec.push(File { 
-                file_str: path_name,
-            });
-        } else if path_name.is_dir() {
-            let dir_iter = path_name.read_dir().unwrap()
-                .map(|dir_entry| PathBuf::from(dir_entry.unwrap().file_name()));
-            dir_vec.push(Directory {
-                dir_str: path_name,
-                file_name_vec: dir_iter.collect(),
-            });
-        } else {
-            error_vec.push(LsError {
-                error_str: String::from((
-                    format!("could not find file or directory: {}", path_name.display()))),
-            });
-        }
-    }
-    print_errors(&error_vec, &config);
-    print_files(&file_vec, &config);
-    print_dirs(&dir_vec, &config);
- 
+    config.print_errors();
+    config.print_files();
+    config.print_dirs();
 
     Ok(())
-}
-
-fn print_errors(error_vec: &[LsError], config: &Config) {
-    for error in error_vec {
-        println!("{}", error.error_str);
-    }
-}
-
-fn print_files(file_vec: &[File], config: &Config) {
-    for file in file_vec {
-        println!("{}", file.file_str.display());
-    }
-}
-
-fn print_dirs(dir_vec: &[Directory], config: &Config) {
-    for dir in dir_vec {
-        println!("{}:", dir.dir_str.display());
-        for file_name in dir.file_name_vec.iter() {
-            println!("{}", file_name.display());
-        }
-    }
 }
 
 /// Visits the specified path, printing its information if a file, or printing its 
