@@ -1,19 +1,20 @@
 use std::error::Error;
 use std::env;
+use std::process;
 
+/// The ls command lists directory entries.
 fn main() -> Result<(), Box<dyn Error>> {
-    let args: Vec<String> = env::args().collect();
 
-    if args.len() == 1 {
-        println!("usage: cargo run <cmd> [options ...]");
-        return Ok(());
-    }
-
-    let cmd_args = &args[1..];
-    if args[1].as_str() == "ls" {
-        rust_cl_tools::ls::run(cmd_args)?;
+    let mut args = env::args();
+    args.next(); // Burn program name
+    if cfg!(unix) {
+        rust_cl_tools::run_for_unix(args).unwrap_or_else(|err| {
+            println!("Problem processing command line arguments: {:?}", err);
+            process::exit(1);
+        });
     } else {
-        println!("Command not recognized: {}", args[1]);
+        eprintln!("ls command not supported on operating system {}", env::consts::OS);
+        process::exit(1);
     }
 
     Ok(())

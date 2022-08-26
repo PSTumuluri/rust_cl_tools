@@ -10,8 +10,8 @@ Currently, only the ls command is supported.
 
 ## ls
 
-The ls command supports the following options:
+List directory entries. Supports the following options:
 
 ### list all (-a)
 
-The lost all options causes the command to include hidden files.
+List hidden files, i.e. those whose file name begins with a dot.
