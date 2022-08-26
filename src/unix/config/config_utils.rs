@@ -7,9 +7,9 @@ use std::fs::DirEntry;
 /// Each option is set upon reading a specific character, e.g. reading 'a' enables 
 /// the list all option.
 pub struct Settings {
-    list_all: bool,
-    long_list: bool,
-    sort: Sort,
+    pub list_all: bool,
+    pub long_list: bool,
+    pub sort: Sort,
 }
 
 impl Settings {

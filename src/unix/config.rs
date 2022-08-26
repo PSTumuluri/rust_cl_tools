@@ -120,7 +120,7 @@ impl Config {
         match sort.sort_type() {
             SortType::Alphabetic => {
                 entries.sort_by(|lhs, rhs| {
-                    let comp = lhs.file_name().cmp((&rhs.file_name()));
+                    let comp = lhs.file_name().cmp(&rhs.file_name());
                     if sort.reversed() {
                         match comp {
                             Ordering::Less => Ordering::Greater,
